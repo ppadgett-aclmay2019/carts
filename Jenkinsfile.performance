@@ -1,5 +1,17 @@
 @Library('dynatrace@master') _
 
+def tagMatchRules = [
+  [
+    meTypes: [
+      [meType: 'SERVICE']
+    ],
+    tags : [
+      [context: 'CONTEXTLESS', key: 'app', value: 'carts'],
+      [context: 'CONTEXTLESS', key: 'environment', value: 'dev']
+    ]
+  ]
+]
+
 pipeline {
   agent {
     label 'git'
@@ -15,20 +27,10 @@ pipeline {
         recordDynatraceSession(
           envId: 'Dynatrace Tenant',
           testCase: 'loadtest',
-          tagMatchRules: [
-            [
-              meTypes: [
-                [meType: 'SERVICE']
-              ],
-              tags: [
-                [context: 'CONTEXTLESS', key: 'app', value: "${env.APP_NAME}"],
-                [context: 'CONTEXTLESS', key: 'environment', value: 'dev']
-              ]
-            ]
-          ]
+          tagMatchRules: tagMatchRules
         ) 
         {
-        container('jmeter') {
+          container('jmeter') {
             script {
               def status = executeJMeter ( 
                 scriptName: "jmeter/${env.APP_NAME}_perfcheck.jmx",
@@ -40,7 +42,7 @@ pipeline {
                 loopCount: 250,
                 LTN: "PerfCheck_${BUILD_NUMBER}",
                 funcValidation: false,
-                avgRtValidation: 2000
+                avgRtValidation: 4000
               )
               if (status != 0) {
                 currentBuild.result = 'FAILED'
@@ -49,11 +51,12 @@ pipeline {
             }
           }
         }
+
         perfSigDynatraceReports(
-  envId: 'Dynatrace Tenant', 
-  nonFunctionalFailure: 1, 
-  specFile: "monspec/${env.APP_NAME}_perfsig.json"
-) 
+          envId: 'Dynatrace Tenant', 
+          nonFunctionalFailure: 1, 
+          specFile: "monspec/${env.APP_NAME}_perfsig.json"
+        ) 
       }
     }
   }
