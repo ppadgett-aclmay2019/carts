@@ -83,7 +83,7 @@ import java.util;
 // -------------------------------------------------------------------------------------
 // Generate the x-dynatrace-test header 
 // -------------------------------------------------------------------------------------
-tring LTN=JMeterUtils.getProperty(&quot;DT_LTN&quot;);
+String LTN=JMeterUtils.getProperty(&quot;DT_LTN&quot;);
 if((LTN == null) || (LTN.length() == 0)) {
     if(vars != null) {
         LTN = vars.get(&quot;DT_LTN&quot;);
